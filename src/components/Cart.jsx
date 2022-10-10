@@ -1,9 +1,36 @@
-import React from 'react'
-
+import React, { useContext } from 'react'
+import { removeFromDb } from '../utils/fakeDB';
 import { Link } from 'react-router-dom'
+import { CartContext } from './layouts/Main'
+import CartItem from './CartItem'
+import { toast } from 'react-toastify';
+import { deleteShoppingCart } from '../utils/fakeDB';
 
 const Cart = () => {
-  const cart = []
+  const [cart,setCart] = useContext(CartContext)
+
+ const handleRemovedCart = (id) =>{
+  const remainInCart = cart.filter(product => product.id !== id)
+  setCart(remainInCart)
+  removeFromDb(id)
+  toast.warning('Product Removed', {autoClose:500})
+ }
+
+ const removeCart=()=>{
+  if(cart.length){
+    setCart([])
+  deleteShoppingCart()
+  toast.success('Order Placed',{autoClose:500})
+  }
+  else{
+    toast.error('Cart is Emty',{autoClose: 500})
+  }
+ }
+
+ let total = 0;
+ for(const product of cart){
+      total =  total+ product.price * product.quantity;
+ }
 
   return (
     <div className='flex min-h-screen items-start justify-center bg-gray-100 text-gray-900'>
@@ -11,10 +38,19 @@ const Cart = () => {
         <h2 className='text-xl font-semibold'>
           {cart.length ? 'Review Cart Items' : 'Cart is EMPTY!'}
         </h2>
-        <ul className='flex flex-col divide-y divide-gray-700'></ul>
+        <ul className='flex flex-col divide-y divide-gray-700'>
+          {
+            cart.map(product => <CartItem
+            key={product.id}
+            product = {product}
+            handleRemovedCart={handleRemovedCart}>
+
+            </CartItem>)
+          }
+        </ul>
         <div className='space-y-1 text-right'>
           <p>
-            Total amount: <span className='font-semibold'>00$</span>
+            Total amount: <span className='font-semibold'>{total}$</span>
           </p>
           <p className='text-sm text-gray-400'>
             Not including taxes and shipping costs
@@ -31,6 +67,7 @@ const Cart = () => {
           </Link>
           <button
             type='button'
+            onClick={removeCart}
             className='px-6 py-2 border font-semibold rounded-full hover:bg-cyan-400 bg-cyan-200 text-gray-800'
           >
             Place Order
